@@ -17,12 +17,6 @@ public class Train {
         this.train_route=train_route;
         this.departure_time=departure_time;
         this.travelDate= travelDate;
-        // Gives the seats of the train their values
-        for (int row = 0; row < 100; row++) {
-            for (int column = 0; column < 4; column++) {
-                seats[row][column]=(row+1)+""+(char)('A'+column);
-            }
-        }
     }
 
     // A method that returns the position of the given seat
@@ -63,50 +57,51 @@ public class Train {
         return travelDate;
     }
     // Adds to the train's departure time the time it takes to reach the arrival station
-    
-    
-    
-    
+
+
+
+
     //requirement 2
-    public static Train search(String from, String to, LocalDate date, LocalTime time){
-        RenfeSystem sys = new RenfeSystem();
-        for (int i = 0; i < sys.getTrainCount(); i++) {
-            Train t = sys.getTrain(i);
-            LocalDate[] dates = t.getTravelDate();
-            boolean validDate = false;
-            for (int k = 0; k < dates.length && !validDate; k++) {
-                if (dates[k].equals(date)) {
-                    validDate = true;
-                }
+    private boolean matches
+    (RenfeSystem sys, String from, String to, LocalDate date, LocalTime time){
+        boolean validDate = false;
+        for (int k = 0; k < travelDate.length && !validDate; k++) {
+            if (travelDate[k].equals(date)) {
+                validDate = true;
             }
+        }
+        if (!validDate){
+            return false;
+        }
 
+        Station[] stations = this.train_route.getStations();
+        int indexFrom = -1;
+        int indexTo = -1;
 
-            if(validDate) {
-                Route route = t.getRoute();
-                Station[] stations = route.getStations();
-
-                int indexFrom = -1;
-                int indexTo = -1;
-
-                for (int j = 0; j < stations.length; j++) {
-                    if (stations[j].getName().equals(from) && t.getArrivalTime(j).equals(time)) {
-                        indexFrom = j;
-                    }
-                    if (stations[j].getName().equals(to)) {
-                        indexTo = j;
-                    }
-                }
-
-                if (indexFrom != -1 && indexTo != -1 && indexTo>indexFrom) {
-                    return t; // Devuelve el tren encontrado
-                }
+        for (int j = 0; j < stations.length; j++) {
+            if (stations[j].getName().equalsIgnoreCase(from) && this.getArrivalTime(j).equals(time)) {
+                indexFrom = j;
+            }
+            if (stations[j].getName().equalsIgnoreCase(to)) {
+                indexTo = j;
             }
         }
 
+        return indexFrom != -1 && indexTo != -1 && indexTo>indexFrom;
+    }
+
+    private static Train search
+        (RenfeSystem sys,String from, String to, LocalDate date, LocalTime time){
+        for (int i = 0; i < sys.getTrainCount(); i++) {
+            Train t = sys.getTrain(i);
+            if (t.matches(sys, from, to, date, time)){
+                return t;
+            }
+        }
         return null;
     }
 
-    private static void searchRequest(){
+    public static void searchRequest(RenfeSystem sys){
         Scanner sc = new Scanner(System.in);
         System.out.println("Insert the start station");
         String from = sc.next();
@@ -117,7 +112,7 @@ public class Train {
         System.out.println("Insert hour: (HH:MM)");
         LocalTime time = LocalTime.parse(sc.next());
 
-        Train result = search(from,to, date, time);
+        Train result = search(sys, from,to, date, time);
         if (result!=null){
             System.out.println("Found train: "+result.getTrain_id());
         } else {
