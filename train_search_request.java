@@ -1,64 +1,75 @@
 package requirement1;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Scanner;
 
-public class train_search_request {
+public class Train {
+    private final int train_id;
+    private final Route train_route;
+    private final LocalTime departure_time;
+    private final LocalDate[] travelDate;
+    private final String[][] seats = new String[100][4];
+    private final boolean[][] occupied = new boolean[100][4];
 
-    public static RenfeSystem sys = new RenfeSystem();
-
-    public static void createObjects() {
-        Station madrid = new Station("Madrid");
-        Station guadalajara = new Station("Guadalajara");
-        Station zaragoza = new Station("Zaragoza");
-        Station barcelona = new Station("Barcelona");
-
-        Route madrid_barcelona = new Route(
-                new double[][]{
-                        {0, 10, 25, 45},
-                        {10, 0, 18, 38},
-                        {25, 18, 0, 20},
-                        {45, 38, 20, 0}},
-                new Station[]{madrid, guadalajara, zaragoza, barcelona},
-                new int[]{30, 80, 90}
-        );
-        sys.addRoute(madrid_barcelona);
-
-        // Varios trenes para comprobar que recorre toda la lista
-        Train t1 = new Train(
-                101, madrid_barcelona,
-                LocalTime.of(8, 0),
-                new LocalDate[]{LocalDate.of(2026, 12, 28), LocalDate.of(2026, 12, 30)}
-        );
-        sys.addTrain(t1);
-
-        Train t2 = new Train(
-                102, madrid_barcelona,
-                LocalTime.of(15, 30),
-                new LocalDate[]{LocalDate.of(2026, 12, 30), LocalDate.of(2026, 12, 31)}
-        );
-        sys.addTrain(t2);
-
-        Passenger user1 = new Passenger(
-                1, "Juanito", "Gonzalo",
-                "juan@gmail.com", "juan1234"
-        );
-        sys.addPassenger(user1);
-
-        Reservation user1R = new Reservation(
-                1, user1, t1, madrid, barcelona,
-                new String[]{"2A"}, LocalDate.of(2026, 12, 28)
-        );
-        sys.addReserve(user1R);
-
-        user1R.getTrain().reserveSeats(user1R.getSeat());
+    public Train( int train_id, Route train_route, LocalTime departure_time, LocalDate[] travelDate){
+        this.train_id=train_id;
+        this.train_route=train_route;
+        this.departure_time=departure_time;
+        this.travelDate= travelDate;
+        // Gives the seats of the train their values
+        for (int row = 0; row < 100; row++) {
+            for (int column = 0; column < 4; column++) {
+                seats[row][column]=(row+1)+""+(char)('A'+column);
+            }
+        }
     }
 
+    // A method that returns the position of the given seat
+    private int[] findSeat(String seat) {
+        for (int i = 0; i < seats.length; i++) {
+            for (int j = 0; j < seats[i].length; j++) {
+                if (seats[i][j].equals(seat)) return new int[]{i, j};
+            }
+        }
+        return null;
+    }
+    // Checks whether the seat is free
+    public boolean isSeatFree(String seat) {
+        int[] pos = findSeat(seat); // gets the position of the seat to check
+        return pos != null && !occupied[pos[0]][pos[1]]; // true only if the seat exists and is not occupied
+    }
 
+    // This one reserves the seats and marks them as occupied
+    public boolean reserveSeats(String[] requested) {
+        for (String s : requested) {
+            if (!isSeatFree(s)) return false;
+        }
+        for (String s : requested) {
+            int[] pos = findSeat(s);
+            occupied[pos[0]][pos[1]] = true;
+        }
+        return true;
+    }
 
+    // Basic getters
+    public int getTrain_id() { return train_id; }
+    public Route getRoute() { return train_route; }
+    public LocalTime getDepartureTime() { return departure_time; }
+    public LocalTime getArrivalTime(int station) {
+        return departure_time.plusMinutes(train_route.getMinutes(0, station));
+    }
+    public LocalDate[] getTravelDate() {
+        return travelDate;
+    }
+    // Adds to the train's departure time the time it takes to reach the arrival station
+    
+    
+    
+    
+    //requirement 2
     public static Train search(String from, String to, LocalDate date, LocalTime time){
+        RenfeSystem sys = new RenfeSystem();
         for (int i = 0; i < sys.getTrainCount(); i++) {
             Train t = sys.getTrain(i);
             LocalDate[] dates = t.getTravelDate();
@@ -95,7 +106,7 @@ public class train_search_request {
         return null;
     }
 
-    public static void searchRequest(){
+    private static void searchRequest(){
         Scanner sc = new Scanner(System.in);
         System.out.println("Insert the start station");
         String from = sc.next();
@@ -114,8 +125,6 @@ public class train_search_request {
         }
     }
 
-    public static void main(String[] args) {
-        createObjects();
-        searchRequest();
-    }
+
+
 }
